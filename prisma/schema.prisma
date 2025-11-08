@@ -1,0 +1,51 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// 問題テーブル
+model Question {
+  id            Int          @id @default(autoincrement())
+  title         String
+  questionText  String       // 問題文
+  questionType  String       // reading, vocabulary, grammar, writing
+  difficulty    String       // easy, medium, hard
+  correctAnswer String?      // 正解（参考）
+  options       String?      // 選択肢（JSON文字列）
+  maxScore      Int          @default(10)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  
+  // リレーション
+  attempts      TestAttempt[]
+}
+
+// 解答テーブル
+model TestAttempt {
+  id            String    @id @default(uuid())
+  sessionId     String    // ブラウザセッションID
+  studentName   String    // 受験者名
+  questionId    Int       // 問題ID
+  answer        String    // 解答
+  answerTime    Int       // 解答時間（秒）
+  behaviorLogs  String    // 行動ログ（JSON文字列）
+  riskScore     Float?    // 不正リスクスコア
+  llmAnalysis   String?   // LLM分析結果（JSON文字列）
+  status        String    @default("in_progress") // in_progress, completed, flagged
+  createdAt     DateTime  @default(now())
+  completedAt   DateTime?
+  
+  // リレーション
+  question      Question  @relation(fields: [questionId], references: [id])
+  
+  @@index([sessionId])
+  @@index([status])
+  @@index([createdAt])
+}
